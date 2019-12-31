@@ -9,6 +9,7 @@ module.exports = {
         options: path.join(__dirname, srcDir + 'options.ts'),
         main: path.join(__dirname, srcDir + 'main.ts'),
         background: path.join(__dirname, srcDir + 'background.ts'),
+        'xhr-wrapper': path.join(__dirname, srcDir + 'xhr-wrapper.ts')
     },
     output: {
         path: path.join(__dirname, '../dist/js'),
