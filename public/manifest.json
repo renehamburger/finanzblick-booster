@@ -14,7 +14,7 @@
   "content_scripts": [
     {
       "matches": [
-        "<all_urls>"
+        "https://finanzblick.de/webapp/*"
       ],
       "js": [
         "js/vendor.js",
@@ -29,7 +29,6 @@
     ]
   },
   "permissions": [
-    "storage",
-    "<all_urls>"
+    "storage"
   ]
 }
