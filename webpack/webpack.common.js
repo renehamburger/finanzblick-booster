@@ -7,8 +7,8 @@ module.exports = {
     entry: {
         popup: path.join(__dirname, srcDir + 'popup.ts'),
         options: path.join(__dirname, srcDir + 'options.ts'),
+        main: path.join(__dirname, srcDir + 'main.ts'),
         background: path.join(__dirname, srcDir + 'background.ts'),
-        content_script: path.join(__dirname, srcDir + 'content_script.ts')
     },
     output: {
         path: path.join(__dirname, '../dist/js'),
@@ -37,8 +37,8 @@ module.exports = {
         new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
         new CopyPlugin([
             { from: '.', to: '../' }
-          ],
-          {context: 'public' }
+        ],
+            { context: 'public' }
         ),
     ]
 };
