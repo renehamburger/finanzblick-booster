@@ -18,7 +18,7 @@ const ROOT = 'https://finanzblick.de/webapp';
 const WATCHED_ROUTES = []; // ['Finance/GetBookings'];
 
 function isWatchedRoute(url: string): boolean {
-  return WATCHED_ROUTES.some((route) => url === `${ROOT}/${route}`)
+  return WATCHED_ROUTES.some((route) => url === `${ROOT}/${route}`);
 }
 
 XHR.open = function open(this: XMLHttpRequest, method: string, url: string) {
@@ -32,13 +32,14 @@ XHR.open = function open(this: XMLHttpRequest, method: string, url: string) {
   return xhrOpen.call(this, method, url);
 };
 
-XHR.setRequestHeader = function setRequestHeader(this: XMLHttpRequest, header: string, value: string) {
+XHR.setRequestHeader = function setRequestHeader(this: XMLHttpRequest, header: string,
+  value: string) {
   this.pbb.request.headers[header] = value;
   return xhrSetRequestHeader.call(this, header, value);
 };
 
 XHR.send = function send(this: XMLHttpRequest, body) {
-  const request = this.pbb.request;
+  const { request } = this.pbb;
   if (request && typeof body === 'string' && isWatchedRoute(request.url)) {
     try {
       const payload = JSON.parse(body);
@@ -54,6 +55,7 @@ XHR.send = function send(this: XMLHttpRequest, body) {
         window.dispatchEvent(event);
       });
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error(err);
     }
   }
