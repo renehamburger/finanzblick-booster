@@ -10,6 +10,10 @@
         "typeRoots": [
             "node_modules/@types"
         ],
-        "esModuleInterop": true
+        "esModuleInterop": true,
+        "lib": [
+            "es2017",
+            "dom"
+        ]
     }
 }

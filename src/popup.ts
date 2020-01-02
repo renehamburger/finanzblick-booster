@@ -8,3 +8,4 @@ function triggerAction(action: Action) {
 }
 
 $('#deselectBookings').on('click', () => triggerAction('deselectBookings'));
+$('#exportCurrentList').on('click', () => triggerAction('exportCurrentList'));
