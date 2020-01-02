@@ -11,5 +11,5 @@ jobs:
     - uses: actions/checkout@v1
     - name: Test
       run: |
-        npm buid
-        npm test
+        npm run buid
+      # npm test
