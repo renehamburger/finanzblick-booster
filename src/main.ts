@@ -2,7 +2,7 @@ loadXhrWrapper();
 
 function loadXhrWrapper() {
   const s = document.createElement('script');
-  s.src = chrome.extension.getURL('js/xhr-wrapper.js');
+  s.src = chrome.extension.getURL('js/finanzblick-booster-xhr-wrapper.js');
   s.addEventListener('load', function () {
     this.remove();
   });

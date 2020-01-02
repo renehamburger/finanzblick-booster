@@ -1,15 +1,15 @@
 {
   "manifest_version": 2,
   "name": "Finanzblick booster",
-  "description": "Chrome extension to extend & fix the Finanzblick web app at https://finanzblick.de/webapp/",
+  "description": "Chrome extension to extend the Finanzblick web app at https://finanzblick.de/webapp/",
   "version": "0.0.1",
   "options_ui": {
-    "page": "options.html",
+    "page": "finanzblick-booster-options.html",
     "chrome_style": true
   },
   "browser_action": {
     "default_icon": "icon.png",
-    "default_popup": "popup.html"
+    "default_popup": "finanzblick-booster-popup.html"
   },
   "content_scripts": [
     {
@@ -19,17 +19,17 @@
       "run_at": "document_start",
       "js": [
         "js/vendor.js",
-        "js/main.js"
+        "js/finanzblick-booster-main.js"
       ]
     }
   ],
   "background": {
     "scripts": [
       "js/vendor.js",
-      "js/background.js"
+      "js/finanzblick-booster-background.js"
     ]
   },
   "web_accessible_resources": [
-    "js/xhr-wrapper.js"
+    "js/finanzblick-booster-xhr-wrapper.js"
   ]
 }
