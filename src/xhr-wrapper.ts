@@ -6,29 +6,29 @@ const xhrSetRequestHeader = XHR.setRequestHeader;
 const ROOT = 'https://finanzblick.de/webapp';
 const WATCHED_ROUTES = []; // ['Finance/GetBookings'];
 
-XHR.open = function (method: string, url: string) {
-  if (WATCHED_ROUTES.some(route => url === `${ROOT}/${route}`)) {
-    this._request = {
+XHR.open = function open(method: string, url: string) {
+  if (WATCHED_ROUTES.some((route) => url === `${ROOT}/${route}`)) {
+    this.pbbRequest = {
       method,
       url,
       headers: {}
     };
   }
-  return xhrOpen.apply(this, arguments);
+  return xhrOpen.call(this, method, url);
 };
 
-XHR.setRequestHeader = function (header: string, value: string) {
-  if (this._request) {
-    this._request.headers[header] = value;
+XHR.setRequestHeader = function setRequestHeader(header: string, value: string) {
+  if (this.pbbRequest) {
+    this.pbbRequest.headers[header] = value;
   }
-  return xhrSetRequestHeader.apply(this, arguments);
+  return xhrSetRequestHeader.call(this, header, value);
 };
 
-XHR.send = function (data) {
-  const request = this._request;
+XHR.send = function send(data) {
+  const request = this.pbbRequest;
   if (request) {
     request.data = data;
-    this.addEventListener('load', function () {
+    this.addEventListener('load', function onLoad() {
       const response = {
         headers: this.getAllResponseHeaders(),
         body: JSON.parse(this.responseText)
@@ -39,5 +39,5 @@ XHR.send = function (data) {
       window.dispatchEvent(event);
     });
   }
-  return xhrSend.apply(this, arguments);
+  return xhrSend.call(this, data);
 };
