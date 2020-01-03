@@ -1,4 +1,5 @@
 import { Actions } from './lib/actions.class';
+import { PREFIX } from './shared/const';
 
 function loadXhrWrapper() {
   const s = document.createElement('script');
@@ -13,7 +14,10 @@ const actions = new Actions();
 loadXhrWrapper();
 
 chrome.runtime.onMessage.addListener((request) => {
-  if (request.action in actions) {
-    actions[request.action]();
+  if (request.action && request.action.startsWith(PREFIX)) {
+    const action = request.action.replace(PREFIX);
+    if (action in actions) {
+      actions[request.action]();
+    }
   }
 });
