@@ -15,9 +15,9 @@ loadXhrWrapper();
 
 chrome.runtime.onMessage.addListener((request) => {
   if (request.action && request.action.startsWith(PREFIX)) {
-    const action = request.action.replace(PREFIX);
+    const action = request.action.replace(PREFIX, '');
     if (action in actions) {
-      actions[request.action]();
+      actions[action]();
     }
   }
 });

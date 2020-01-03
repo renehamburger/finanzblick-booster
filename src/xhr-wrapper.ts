@@ -1,4 +1,6 @@
-interface XMLHttpRequest {
+import { PREFIX } from './shared/const';
+
+interface ExtendedXMLHttpRequest extends XMLHttpRequest {
   pbb: {
     request: {
       method: string;
@@ -21,7 +23,7 @@ function isWatchedRoute(url: string): boolean {
   return WATCHED_ROUTES.some((route) => url === `${ROOT}/${route}`);
 }
 
-XHR.open = function open(this: XMLHttpRequest, method: string, url: string) {
+XHR.open = function open(this: ExtendedXMLHttpRequest, method: string, url: string) {
   this.pbb = {
     request: {
       method,
@@ -32,13 +34,13 @@ XHR.open = function open(this: XMLHttpRequest, method: string, url: string) {
   return xhrOpen.call(this, method, url);
 };
 
-XHR.setRequestHeader = function setRequestHeader(this: XMLHttpRequest, header: string,
+XHR.setRequestHeader = function setRequestHeader(this: ExtendedXMLHttpRequest, header: string,
   value: string) {
   this.pbb.request.headers[header] = value;
   return xhrSetRequestHeader.call(this, header, value);
 };
 
-XHR.send = function send(this: XMLHttpRequest, body) {
+XHR.send = function send(this: ExtendedXMLHttpRequest, body) {
   const { request } = this.pbb;
   if (request && typeof body === 'string' && isWatchedRoute(request.url)) {
     try {
@@ -49,7 +51,7 @@ XHR.send = function send(this: XMLHttpRequest, body) {
           headers: this.getAllResponseHeaders(),
           body: JSON.parse(this.responseText)
         };
-        const event = new CustomEvent('fb.xhr', {
+        const event = new CustomEvent(`${PREFIX}xhr`, {
           detail: { request, response }
         });
         window.dispatchEvent(event);
