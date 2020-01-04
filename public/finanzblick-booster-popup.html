@@ -3,13 +3,30 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Popup</title>
   <script src="js/vendor.js"></script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <style>
+    body {
+      padding: 5px;
+    }
+
+    button {
+      margin: 5px;
+      white-space: nowrap;
+    }
+  </style>
 </head>
 
-<body>
-  <button id="deselectBookings">Buchungsauswahl aufheben</button>
-  <button id="exportCurrentList">Sichtbare Buchungen exportieren</button>
+<body class="container">
+  <button id="deselectBookings" class="btn btn-sm btn-primary">
+    Buchungsauswahl aufheben
+  </button>
+  <button id="exportCurrentList" class="btn btn-sm btn-primary">
+    Sichtbare Buchungen exportieren
+  </button>
   <script src="js/finanzblick-booster-popup.js"></script>
 </body>
 
