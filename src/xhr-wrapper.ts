@@ -1,13 +1,9 @@
 import { PREFIX } from './shared/const';
+import { XHRRequest, XHRResponse } from './shared/interfaces';
 
 interface ExtendedXMLHttpRequest extends XMLHttpRequest {
   pbb: {
-    request: {
-      method: string;
-      url: string;
-      headers: Record<string, string>,
-      payload?: object
-    }
+    request: XHRRequest
   }
 }
 
@@ -16,8 +12,8 @@ const xhrOpen = XHR.open;
 const xhrSend = XHR.send;
 const xhrSetRequestHeader = XHR.setRequestHeader;
 
-const ROOT = 'https://finanzblick.de/webapp';
-const WATCHED_ROUTES = []; // ['Finance/GetBookings'];
+const ROOT = '/webapp';
+const WATCHED_ROUTES = ['Finance/GetBookings'];
 
 function isWatchedRoute(url: string): boolean {
   return WATCHED_ROUTES.some((route) => url === `${ROOT}/${route}`);
@@ -47,14 +43,14 @@ XHR.send = function send(this: ExtendedXMLHttpRequest, body) {
       const payload = JSON.parse(body);
       request.payload = payload;
       this.addEventListener('load', function onLoad() {
-        const response = {
+        const response: XHRResponse = {
           headers: this.getAllResponseHeaders(),
           body: JSON.parse(this.responseText)
         };
-        const event = new CustomEvent(`${PREFIX}xhr`, {
-          detail: { request, response }
-        });
-        window.dispatchEvent(event);
+        window.postMessage({
+          action: `${PREFIX}handleXHR`,
+          arguments: [request, response]
+        }, '*');
       });
     } catch (err) {
       // eslint-disable-next-line no-console

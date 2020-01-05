@@ -2,10 +2,16 @@
 import $ from 'cash-dom';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import { XHRRequest, XHRResponse } from '../shared/interfaces';
 
-type ExportDatum = string | number;
+type ExportDatum = string | number | Date;
 type ExportDataObject = Array<Record<string, ExportDatum>>;
 type ExportDataArray = ExportDatum[][];
+interface Transfers {
+  [id: string]: any
+}
+
+const transfers: Transfers = {};
 
 async function sleep(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));
@@ -42,6 +48,24 @@ async function exportAsXlsx(exportData: ExportDataObject, filename: string) {
   saveAs(blob, `${filename}.xlsx`);
 }
 
+function mapValues<V>(obj: Record<string, V>, fn: (value: V, key: string) => V) {
+  // TODO: Use lodash/fp instead
+  return Object.keys(obj).reduce((result, key) => {
+    // eslint-disable-next-line no-param-reassign
+    result[key] = fn(obj[key], key);
+    return result;
+  }, {});
+}
+
+function convertTransfer(transfer: Record<string, any>): Record<string, ExportDatum> {
+  return mapValues(transfer, (value) => {
+    if (typeof value === 'object') {
+      return JSON.stringify(value);
+    }
+    return value;
+  });
+}
+
 export class Actions {
   async deselectBookings() {
     const selector = '#booking-grid-wrapper button[data-id="checkbox-item-selection"][checked]';
@@ -56,21 +80,23 @@ export class Actions {
     const bookings: ExportDataObject = [];
     $('#booking-grid-wrapper [data-booking-id]').each((_index, el) => {
       const $el = $(el);
-      const amount = $el.find('[data-automationid="balance-amount"]').text();
-      bookings.push({
-        ordertype: $el.find('[data-automationid="ordertype"]').text(),
-        receivername: $el.find('[data-automationid="receivername"]').text(),
-        purpose: $el.find('[data-automationid="purpose"]').text(),
-        // selectcategory: $el.find('[data-automationid="btn-selectcategory"]').text(),
-        // document: $el.find('[data-automationid="icon-document"]').text(),
-        // keywords: $el.find('[data-automationid="icon-keywords"]').text(),
-        // rebooking: $el.find('[data-automationid="icon-rebooking"]').text(),
-        // taxrelevant: $el.find('[data-automationid="icon-taxrelevant"]').text(),
-        amount: parseFloat(amount.replace(/\./g, '').replace(',', '.')),
-        categoryname: $el.find('[data-automationid="categoryname"]').text()
-      });
+      const id = $el.data('booking-id');
+      const transfer = transfers[id];
+      if (transfer) {
+        bookings.push(convertTransfer(transfer));
+      } else {
+        console.error(`No data for booking ${id}`);
+      }
     });
     exportAsXlsx(bookings, 'Finanzblick-export');
+  }
+
+  handleXHR(_request: XHRRequest, response: XHRResponse) {
+    for (const group of response.body.Groups) {
+      for (const transfer of group.Transfers) {
+        transfers[transfer.Id] = transfer;
+      }
+    }
   }
 }
 

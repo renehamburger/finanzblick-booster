@@ -11,13 +11,15 @@ function loadXhrWrapper() {
 }
 
 const actions = new Actions();
-loadXhrWrapper();
-
-chrome.runtime.onMessage.addListener((request) => {
-  if (request.action && request.action.startsWith(PREFIX)) {
-    const action = request.action.replace(PREFIX, '');
+function onMessage(message) {
+  if (message.action && message.action.startsWith(PREFIX)) {
+    const action = message.action.replace(PREFIX, '');
     if (action in actions) {
-      actions[action]();
+      actions[action](...(message.arguments || []));
     }
   }
-});
+}
+
+loadXhrWrapper();
+chrome.runtime.onMessage.addListener(onMessage);
+window.addEventListener('message', (evt) => onMessage(evt.data));
