@@ -36,16 +36,15 @@ XHR.setRequestHeader = function setRequestHeader(this: ExtendedXMLHttpRequest, h
   return xhrSetRequestHeader.call(this, header, value);
 };
 
-XHR.send = function send(this: ExtendedXMLHttpRequest, body) {
+XHR.send = function send(this: ExtendedXMLHttpRequest, payload) {
   const { request } = this.pbb;
-  if (request && typeof body === 'string' && isWatchedRoute(request.url)) {
+  if (request && typeof payload === 'string' && isWatchedRoute(request.url)) {
     try {
-      const payload = JSON.parse(body);
       request.payload = payload;
       this.addEventListener('load', function onLoad() {
         const response: XHRResponse = {
           headers: this.getAllResponseHeaders(),
-          body: JSON.parse(this.responseText)
+          body: this.responseText
         };
         window.postMessage({
           action: `${PREFIX}handleXHR`,
@@ -57,5 +56,5 @@ XHR.send = function send(this: ExtendedXMLHttpRequest, body) {
       console.error(err);
     }
   }
-  return xhrSend.call(this, body);
+  return xhrSend.call(this, payload);
 };

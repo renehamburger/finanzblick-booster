@@ -85,14 +85,15 @@ export class Actions {
       if (transfer) {
         bookings.push(convertTransfer(transfer));
       } else {
-        console.error(`No data for booking ${id}`);
+        throw new Error(`No data for booking ${id}`);
       }
     });
     exportAsXlsx(bookings, 'Finanzblick-export');
   }
 
   handleXHR(_request: XHRRequest, response: XHRResponse) {
-    for (const group of response.body.Groups) {
+    const data = JSON.parse(response.body);
+    for (const group of data.Groups) {
       for (const transfer of group.Transfers) {
         transfers[transfer.Id] = transfer;
       }
