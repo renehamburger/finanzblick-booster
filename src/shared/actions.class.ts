@@ -3,6 +3,7 @@ import $ from 'cash-dom';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { XHRRequest, XHRResponse } from './interfaces';
+import mapValues from './helpers';
 
 type ExportDatum = string | number | Date;
 type ExportDataObject = Array<Record<string, ExportDatum>>;
@@ -46,15 +47,6 @@ async function exportAsXlsx(exportData: ExportDataObject, filename: string) {
   const blob = new Blob([stringToBuffer(wbout)], { type: 'application/octet-stream' });
   // Once size restriction of blobs is reached, streamSaver package needs to be used instead
   saveAs(blob, `${filename}.xlsx`);
-}
-
-function mapValues<V>(obj: Record<string, V>, fn: (value: V, key: string) => V) {
-  // TODO: Use lodash/fp instead
-  return Object.keys(obj).reduce((result, key) => {
-    // eslint-disable-next-line no-param-reassign
-    result[key] = fn(obj[key], key);
-    return result;
-  }, {});
 }
 
 function convertTransfer(transfer: Record<string, any>): Record<string, ExportDatum> {
