@@ -1,5 +1,5 @@
 import $ from 'cash-dom';
-import { Action } from './lib/actions.class';
+import { Action } from './shared/actions.class';
 import { PREFIX } from './shared/const';
 
 function triggerAction(action: Action) {

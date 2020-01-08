@@ -1,4 +1,4 @@
-import { Actions } from './lib/actions.class';
+import { Actions } from './shared/actions.class';
 import { PREFIX } from './shared/const';
 
 function loadXhrWrapper() {

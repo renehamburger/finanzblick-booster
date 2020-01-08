@@ -2,7 +2,7 @@
 import $ from 'cash-dom';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import { XHRRequest, XHRResponse } from '../shared/interfaces';
+import { XHRRequest, XHRResponse } from './interfaces';
 
 type ExportDatum = string | number | Date;
 type ExportDataObject = Array<Record<string, ExportDatum>>;
