@@ -2,12 +2,11 @@
 import $ from 'cash-dom';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import { XHRRequest, XHRResponse } from './interfaces';
-import mapValues from './helpers';
+import { XHRRequest, XHRResponse, ExportValue } from './interfaces';
+import { adjustTransfer } from '../main/helpers';
 
-type ExportDatum = string | number | Date;
-type ExportDataObject = Array<Record<string, ExportDatum>>;
-type ExportDataArray = ExportDatum[][];
+type ExportDataObject = Array<Record<string, ExportValue>>;
+type ExportDataArray = ExportValue[][];
 interface Transfers {
   [id: string]: any
 }
@@ -49,15 +48,6 @@ async function exportAsXlsx(exportData: ExportDataObject, filename: string) {
   saveAs(blob, `${filename}.xlsx`);
 }
 
-function convertTransfer(transfer: Record<string, any>): Record<string, ExportDatum> {
-  return mapValues(transfer, (value) => {
-    if (typeof value === 'object') {
-      return JSON.stringify(value);
-    }
-    return value;
-  });
-}
-
 export class Actions {
   async deselectBookings() {
     const selector = '#booking-grid-wrapper button[data-id="checkbox-item-selection"][checked]';
@@ -75,7 +65,7 @@ export class Actions {
       const id = $el.data('booking-id');
       const transfer = transfers[id];
       if (transfer) {
-        bookings.push(convertTransfer(transfer));
+        bookings.push(transfer);
       } else {
         throw new Error(`No data for booking ${id}`);
       }
@@ -87,7 +77,7 @@ export class Actions {
     const data = JSON.parse(response.body);
     for (const group of data.Groups) {
       for (const transfer of group.Transfers) {
-        transfers[transfer.Id] = transfer;
+        transfers[transfer.Id] = adjustTransfer(transfer);
       }
     }
   }
