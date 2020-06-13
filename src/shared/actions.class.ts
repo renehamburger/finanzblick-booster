@@ -73,6 +73,10 @@ export class Actions {
     exportAsXlsx(bookings, 'Finanzblick-export');
   }
 
+  async exportLoaded() {
+    exportAsXlsx(Object.values(transfers), 'Finanzblick-export');
+  }
+
   handleXHR(_request: XHRRequest, response: XHRResponse) {
     const data = JSON.parse(response.body);
     for (const group of data.Groups) {
