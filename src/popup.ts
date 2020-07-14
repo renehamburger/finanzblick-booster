@@ -8,6 +8,7 @@ function triggerAction(action: Action) {
   });
 }
 
+$('#exportCurrentPage').on('click', () => triggerAction('exportCurrentPage'));
+$('#exportCurrentView').on('click', () => triggerAction('exportCurrentView'));
+$('#exportAll').on('click', () => triggerAction('exportAll'));
 $('#deselectBookings').on('click', () => triggerAction('deselectBookings'));
-$('#exportCurrentList').on('click', () => triggerAction('exportCurrentList'));
-$('#exportLoaded').on('click', () => triggerAction('exportLoaded'));

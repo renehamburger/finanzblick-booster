@@ -11,25 +11,49 @@
   <style>
     body {
       padding: 5px;
+      min-width: 600px;
     }
-
     button {
-      margin: 5px;
       white-space: nowrap;
+    }
+    .action {
+      margin-bottom: 10px;
+    }
+    .info {
+      font-size: smaller;
+      color: grey;
     }
   </style>
 </head>
 
 <body class="container">
-  <button id="deselectBookings" class="btn btn-sm btn-primary">
-    Buchungsauswahl aufheben
-  </button>
-  <button id="exportCurrentList" class="btn btn-sm btn-primary">
-    Sichtbare Buchungen exportieren
-  </button>
-  <button id="exportLoaded" class="btn btn-sm btn-primary">
-    Alle bisher geladenen Buchungen exportieren
-  </button>
+  <h5>Export</h5>
+  <p class="info">Die folgenden Exportoptionen erstellen eine Excel-Datei aus den jeweiligen Daten.</p>
+  <div class="action">
+    <button id="exportCurrentPage" class="btn btn-sm btn-primary">
+      Seite
+    </button>
+    <div class="info">Alle Buchungen der aktuellen oder zuletzt aufgerufenen Seite exportieren.</div>
+  </div>
+  <div class="action">
+    <button id="exportCurrentView" class="btn btn-sm btn-primary">
+    Buchungsliste
+    </button>
+    <div class="info">Alle Buchungen der aktuellen oder zuletzt aufgerufenen Buchungsliste (d.h. Buchungen eines Kontos oder einer Auswertung) exportieren.</div>
+  </div>
+  <div class="action">
+    <button id="exportAll" class="btn btn-sm btn-secondary">
+      Komplettexport
+    </button>
+    <div class="info">Alle in Finanzblick gespeicherten Buchungen, Konten und Kategorieren exportieren.</div>
+  </div>
+  <h5>Sonstiges</h5>
+  <div class="action">
+    <button id="deselectBookings" class="btn btn-sm btn-primary">
+      Buchungsauswahl aufheben
+    </button>
+    <div class="info">Finanzblick wählt bei aktiver Suche leider immer alle Buchungen aus, sobald man die Bearbeitung startet. Dieser Knopf erlaubt diese Auswahl aufzuheben.</div>
+  </div>
   <script src="js/finanzblick-booster-popup.js"></script>
 </body>
 
