@@ -113,16 +113,33 @@ async function getAccounts(): Promise<any[]> {
   return accounts.Accounts;
 }
 
-async function getCategories(
-  isTaxCategoryTree: boolean
-): Promise<{ credit: any[], debit: any[] }> {
-  const categoryTreeResponse = await fetch(fbUrl(FB_API_GET_CATEGORIES_PATH), {
-    method: 'POST',
-    headers: DEFAULT_HEADERS,
-    body: JSON.stringify({ WindowId, RequestVerificationToken, isTaxCategoryTree })
-  });
-  const categoryTree = await categoryTreeResponse.json();
-  return { credit: categoryTree.CreditCategoryTree, debit: categoryTree.DebitCategoryTree };
+async function getCategories(): Promise<any[]> {
+  const executeGetCategories = async (isTaxCategoryTree: boolean): Promise<any> => {
+    const response = await fetch(fbUrl(FB_API_GET_CATEGORIES_PATH), {
+      method: 'POST',
+      headers: DEFAULT_HEADERS,
+      body: JSON.stringify({ WindowId, RequestVerificationToken, isTaxCategoryTree })
+    });
+    return response.json();
+  };
+  const categories: any[] = [];
+  const extractCategories = (objects: Array<Record<string, any>>,
+    extraProperties: Record<string, any>) => {
+    objects.forEach((obj) => {
+      extractCategories(obj.Children || [], extraProperties);
+      const { Children, ...objectWithoutChildren } = obj;
+      categories.push({ ...objectWithoutChildren, ...extraProperties });
+    });
+  };
+  const [categoryTree, taxCategoryTree] = await Promise.all([
+    executeGetCategories(false),
+    executeGetCategories(true)
+  ]);
+  extractCategories(categoryTree.CreditCategoryTree, { Credit: true, Tax: false });
+  extractCategories(categoryTree.DebitCategoryTree, { Credit: false, Tax: false });
+  extractCategories(taxCategoryTree.CreditCategoryTree, { Credit: true, Tax: true });
+  extractCategories(taxCategoryTree.DebitCategoryTree, { Credit: false, Tax: true });
+  return categories;
 }
 
 export class Actions {
@@ -158,12 +175,10 @@ export class Actions {
   }
 
   async exportAll() {
-    const [accounts, categories, taxCategories] = await Promise.all([
+    const [accounts, categories] = await Promise.all([
       getAccounts(),
-      getCategories(false),
-      getCategories(true)
+      getCategories()
     ]);
-    console.log(accounts, categories, taxCategories);
     const firstPageResponse = await fetch(fbUrl(FB_API_GET_BOOKINGS_PATH), {
       method: 'POST',
       headers: DEFAULT_HEADERS,
@@ -173,9 +188,9 @@ export class Actions {
     const bookingsForFirstPage = convertResponse(firstPageResponseBody);
     const numberOfPages = parseFloat(firstPageResponseBody.TotalBookingPages);
     const bookingsForOtherPages = await getBookingsForMultiplePages(1, numberOfPages);
-    const allBookings = bookingsForFirstPage.concat(...bookingsForOtherPages);
+    const bookings = bookingsForFirstPage.concat(...bookingsForOtherPages);
     const name = getExportName();
-    exportAsXlsx({ bookings }, name);
+    exportAsXlsx({ bookings, accounts, categories }, name);
   }
 
   handleXHR(request: XHRRequest, response: XHRResponse) {

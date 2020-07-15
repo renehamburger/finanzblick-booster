@@ -10,4 +10,4 @@ export const DEFAULT_HEADERS = {
   'Content-Type': 'application/json',
   Accept: 'application/json, text/javascript, */*; q=0.01',
   'X-Requested-With': 'XMLHttpRequest'
-}
+};
