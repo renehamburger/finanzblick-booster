@@ -71,16 +71,13 @@ function convertResponse(data: any): Transfer[] {
 }
 
 async function getBookings(body: object): Promise<Transfer[]> {
-  if (mostRecentGetBookingsRequest) {
-    const response = await fetch(fbUrl(FB_API_GET_BOOKINGS_PATH), {
-      method: 'POST',
-      headers: DEFAULT_HEADERS,
-      body: JSON.stringify(body)
-    });
-    const data = await response.json();
-    return convertResponse(data);
-  }
-  return [];
+  const response = await fetch(fbUrl(FB_API_GET_BOOKINGS_PATH), {
+    method: 'POST',
+    headers: DEFAULT_HEADERS,
+    body: JSON.stringify(body)
+  });
+  const data = await response.json();
+  return convertResponse(data);
 }
 
 async function getBookingsForMultiplePages(
