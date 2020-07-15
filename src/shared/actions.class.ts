@@ -16,7 +16,10 @@ import {
 } from './const';
 import { fbUrl } from './helpers';
 
-type ExportDataObject = Array<Record<string, ExportValue>>;
+type ExcelWorkbookData = {
+  [sheetName: string]: ExcelSheetData;
+};
+type ExcelSheetData = Array<Record<string, ExportValue>>;
 type ExportDataArray = ExportValue[][];
 
 let WindowId: string | undefined;
@@ -39,20 +42,18 @@ function stringToBuffer(text: string): ArrayBuffer {
   return buffer;
 }
 
-async function exportAsXlsx(exportData: ExportDataObject, filename: string) {
-  if (!exportData.length) {
-    return;
-  }
-  const data: ExportDataArray = [Object.keys(exportData[0])];
-  data.push(...exportData.map(Object.values));
-  const sheetName = 'bookings';
+async function exportAsXlsx(exportData: ExcelWorkbookData, filename: string) {
   const workbook = XLSX.utils.book_new();
   workbook.Props = {
     Title: filename,
     CreatedDate: new Date()
   };
-  workbook.SheetNames.push(sheetName);
-  workbook.Sheets[sheetName] = XLSX.utils.aoa_to_sheet(data);
+  for (const [sheetName, sheetData] of Object.entries(exportData)) {
+    const data: ExportDataArray = [Object.keys(sheetData[0])];
+    data.push(...sheetData.map(Object.values));
+    workbook.SheetNames.push(sheetName);
+    workbook.Sheets[sheetName] = XLSX.utils.aoa_to_sheet(data);
+  }
   const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'binary' });
   const blob = new Blob([stringToBuffer(wbout)], { type: 'application/octet-stream' });
   // Once size restriction of blobs is reached, streamSaver package needs to be used instead
@@ -141,7 +142,7 @@ export class Actions {
       const bookings = convertResponse(responseBody);
       const currentPage = parseFloat(requestBody.CurrentPage) + 1;
       const name = getExportName(requestBody.AccountOrGroupId, currentPage);
-      exportAsXlsx(bookings, name);
+      exportAsXlsx({ bookings }, name);
     }
   }
 
@@ -151,7 +152,8 @@ export class Actions {
       const responseBody = JSON.parse(mostRecentGetBookingsResponse.body);
       const numberOfPages = parseFloat(responseBody.TotalBookingPages);
       const bookings = await getBookingsForMultiplePages(0, numberOfPages, requestBody);
-      exportAsXlsx(bookings, 'Finanzblick-export');
+      const name = getExportName(requestBody.AccountOrGroupId);
+      exportAsXlsx({ bookings }, name);
     }
   }
 
@@ -173,7 +175,7 @@ export class Actions {
     const bookingsForOtherPages = await getBookingsForMultiplePages(1, numberOfPages);
     const allBookings = bookingsForFirstPage.concat(...bookingsForOtherPages);
     const name = getExportName();
-    exportAsXlsx(allBookings, name);
+    exportAsXlsx({ bookings }, name);
   }
 
   handleXHR(request: XHRRequest, response: XHRResponse) {
