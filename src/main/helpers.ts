@@ -1,4 +1,4 @@
-import mapValues from '../shared/helpers';
+import { mapValues } from '../shared/helpers';
 import { BackendTransfer, Transfer } from '../shared/interfaces';
 
 // eslint-disable-next-line import/prefer-default-export

@@ -1,4 +1,6 @@
-import { PREFIX, FB_API_GET_BOOKINGS_PATH, FB_API_BASE_URL } from './shared/const';
+import {
+  PREFIX, FB_API_GET_BOOKINGS_PATH, FB_API_BASE_URL, FB_API_GET_SESSON_INFO_PATH
+} from './shared/const';
 import { XHRRequest, XHRResponse } from './shared/interfaces';
 
 interface ExtendedXMLHttpRequest extends XMLHttpRequest {
@@ -12,8 +14,7 @@ const xhrOpen = XHR.open;
 const xhrSend = XHR.send;
 const xhrSetRequestHeader = XHR.setRequestHeader;
 
-
-const WATCHED_ROUTES = [FB_API_GET_BOOKINGS_PATH];
+const WATCHED_ROUTES = [FB_API_GET_BOOKINGS_PATH, FB_API_GET_SESSON_INFO_PATH];
 
 function isWatchedRoute(url: string): boolean {
   return WATCHED_ROUTES.some((route) => url === `${FB_API_BASE_URL}/${route}`);
