@@ -22,7 +22,7 @@
   "dependencies": {
     "cash-dom": "^5.0.0",
     "file-saver": "^2.0.2",
-    "xlsx": "^0.15.4"
+    "xlsx": "^0.17.0"
   },
   "devDependencies": {
     "@types/chrome": "0.0.91",
