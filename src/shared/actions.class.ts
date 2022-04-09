@@ -140,15 +140,6 @@ async function getCategories(): Promise<any[]> {
 }
 
 export class Actions {
-  async deselectBookings() {
-    const selector = '#booking-grid-wrapper button[data-id="checkbox-item-selection"][checked]';
-    while ($(selector).length) {
-      $(selector).last()[0].click();
-      // eslint-disable-next-line no-await-in-loop
-      await sleep(10);
-    }
-  }
-
   async exportCurrentPage() {
     if (mostRecentGetBookingsRequest) {
       const requestBody = JSON.parse(mostRecentGetBookingsRequest.payload);
