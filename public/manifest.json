@@ -14,7 +14,8 @@
   "content_scripts": [
     {
       "matches": [
-        "https://finanzblick.de/webapp/*"
+        "https://finanzblick.de/webapp/*",
+        "https://finanzblickx.buhl.de/*"
       ],
       "run_at": "document_start",
       "js": [
