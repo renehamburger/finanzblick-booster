@@ -1,5 +1,4 @@
 /* eslint-disable class-methods-use-this */
-import $ from 'cash-dom';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import {
@@ -24,8 +23,6 @@ type ExportDataArray = ExportValue[][];
 
 let WindowId: string | undefined;
 let RequestVerificationToken: string | undefined;
-let mostRecentGetBookingsRequest: XHRRequest | undefined;
-let mostRecentGetBookingsResponse: XHRResponse | undefined;
 
 async function sleep(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));
@@ -140,28 +137,6 @@ async function getCategories(): Promise<any[]> {
 }
 
 export class Actions {
-  async exportCurrentPage() {
-    if (mostRecentGetBookingsRequest) {
-      const requestBody = JSON.parse(mostRecentGetBookingsRequest.payload);
-      const responseBody = JSON.parse(mostRecentGetBookingsResponse.body);
-      const bookings = convertResponse(responseBody);
-      const currentPage = parseFloat(requestBody.CurrentPage) + 1;
-      const name = getExportName(requestBody.AccountOrGroupId, currentPage);
-      exportAsXlsx({ bookings }, name);
-    }
-  }
-
-  async exportCurrentView() {
-    if (mostRecentGetBookingsRequest) {
-      const requestBody = JSON.parse(mostRecentGetBookingsRequest.payload);
-      const responseBody = JSON.parse(mostRecentGetBookingsResponse.body);
-      const numberOfPages = parseFloat(responseBody.TotalBookingPages);
-      const bookings = await getBookingsForMultiplePages(0, numberOfPages, requestBody);
-      const name = getExportName(requestBody.AccountOrGroupId);
-      exportAsXlsx({ bookings }, name);
-    }
-  }
-
   async exportAll() {
     const [accounts, categories] = await Promise.all([
       getAccounts(),
@@ -185,13 +160,7 @@ export class Actions {
     if (request.url === fbUrl(FB_API_GET_SESSON_INFO_PATH)) {
       WindowId = JSON.parse(request.payload).WindowId;
       RequestVerificationToken = JSON.parse(response.body).RequestVerificationToken;
-      mostRecentGetBookingsRequest = undefined;
-      mostRecentGetBookingsResponse = undefined;
     } else {
-      if (request.url === fbUrl(FB_API_GET_BOOKINGS_PATH)) {
-        mostRecentGetBookingsRequest = request;
-        mostRecentGetBookingsResponse = response;
-      }
       WindowId = JSON.parse(request.payload || '{}').WindowId || WindowId;
       RequestVerificationToken = JSON.parse(response.body || '{}').RequestVerificationToken || RequestVerificationToken;
     }

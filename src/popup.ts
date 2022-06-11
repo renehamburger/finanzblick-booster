@@ -8,6 +8,4 @@ function triggerAction(action: Action) {
   });
 }
 
-$('#exportCurrentPage').on('click', () => triggerAction('exportCurrentPage'));
-$('#exportCurrentView').on('click', () => triggerAction('exportCurrentView'));
 $('#exportAll').on('click', () => triggerAction('exportAll'));
