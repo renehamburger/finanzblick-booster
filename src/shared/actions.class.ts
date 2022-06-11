@@ -6,6 +6,7 @@ import {
 } from './interfaces';
 import { fbUrl } from './helpers';
 import { createUUID } from './uuid';
+import { PAGE_SIZE } from './const';
 
 type ExcelWorkbookData = {
   [sheetName: string]: ExcelSheetData;
@@ -59,7 +60,8 @@ async function exportAsXlsx(exportData: ExcelWorkbookData, filename: string) {
   };
   for (const [sheetName, sheetData] of Object.entries(exportData)) {
     if (sheetData.length) {
-      const keys = Object.keys(sheetData[0]);
+      // eslint-disable-next-line no-nested-ternary, no-confusing-arrow
+      const keys = Object.keys(sheetData[0]).sort((a, b) => a === 'id' ? -1 : b === 'id' ? 1 : a.localeCompare(b));
       const data: ExportDataArray = [keys];
       sheetData.forEach((entry) => {
         const row = keys.map((key) => entry[key]);
@@ -104,13 +106,73 @@ async function getSyncData(): Promise<{
   return response.json();
 }
 
+function getDateQueryParam(date: Date): string {
+  const pureDate = new Date(date.toDateString());
+  return encodeURIComponent(pureDate.toISOString());
+}
+
+function mapBooking(booking: any): any {
+  const { categories, ...bookingWithoutCategories } = booking;
+  return {
+    ...bookingWithoutCategories,
+    account: booking.account.productName,
+    counterAccount: booking.account.productName,
+    counterAccountId: booking.account.id,
+    receiver: booking.receiver.name,
+    receiverId: booking.receiver.id,
+    tags: booking.tags.map((tag) => tag.name).join(';'),
+    tagIds: booking.tags.map((tag) => tag.id).join(';'),
+    categories: booking.categories.map((cat) => cat.name).join(';'),
+    categoryIds: booking.categories.map((cat) => cat.id).join(';'),
+    category: booking.categories.filter((cat) => !cat.isTaxRelevant).map((cat) => cat.name).join(';'),
+    categoryId: booking.categories.filter((cat) => !cat.isTaxRelevant).map((cat) => cat.id).join(';'),
+    taxCategory: booking.categories.filter((cat) => cat.isTaxRelevant).map((cat) => cat.name).join(';'),
+    taxCategoryId: booking.categories.filter((cat) => cat.isTaxRelevant).map((cat) => cat.id).join(';')
+  };
+}
+
+async function getBookingsForAccount(accountId: string, startDate: Date = new Date('0'), endDate: Date = new Date()): Promise<any[]> {
+  const bookings = [];
+  let page = 0;
+  let morePages = true;
+  do {
+    let url = `accountbases/${accountId}/bookings`;
+    const query = {
+      Skip: page * PAGE_SIZE,
+      Take: PAGE_SIZE,
+      orderBy: 'Date',
+      StartDate: getDateQueryParam(startDate),
+      EndDate: getDateQueryParam(endDate)
+    };
+    url += `?${Object.entries(query).map((entry) => entry.join('=')).join('&')}`;
+    // eslint-disable-next-line no-await-in-loop
+    const response = await fetch(fbUrl(url), {
+      method: 'GET',
+      headers: getHeaders()
+    });
+    const { bookingSections, taken } = await response.json();
+    bookingSections.forEach((section) => {
+      bookings.push(...section.bookings.map(mapBooking));
+    });
+    morePages = taken === PAGE_SIZE;
+    page++;
+  } while (morePages);
+  return bookings;
+}
+
 export class Actions {
   async exportAll() {
     const { accounts, categories, tags } = await getSyncData();
     const individualAccounts = accounts.filter((account) => account.type !== 'AccountGroup');
+    const bookings = [];
+    await Promise.all(individualAccounts.map(async (account) => {
+      bookings.push(...await getBookingsForAccount(account.id));
+    }));
     const flattenedCategories = flattenTree(categories);
     const name = getExportName();
-    exportAsXlsx({ accounts: individualAccounts, categories: flattenedCategories, tags }, name);
+    exportAsXlsx({
+      bookings, accounts: individualAccounts, categories: flattenedCategories, tags
+    }, name);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -8,6 +8,8 @@ module.exports = {
       'ForInStatement',
       'LabeledStatement',
       'WithStatement'
-    ]
+    ],
+    'no-plusplus': 'off',
+    'no-await-in-loop': 'off',
   }
 };
