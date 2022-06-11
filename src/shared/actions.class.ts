@@ -2,31 +2,34 @@
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import {
-  XHRRequest, XHRResponse, ExportValue, Transfer
+  XHRRequest, XHRResponse, ExportValue
 } from './interfaces';
-import { adjustTransfer } from '../main/helpers';
-import {
-  DEFAULT_HEADERS,
-  PAGINATION_DELAY,
-  FB_API_GET_BOOKINGS_PATH,
-  FB_API_GET_SESSON_INFO_PATH,
-  FB_API_GET_CATEGORIES_PATH,
-  FB_API_GET_ACCOUNTS_PATH
-} from './const';
 import { fbUrl } from './helpers';
+import { createUUID } from './uuid';
 
 type ExcelWorkbookData = {
   [sheetName: string]: ExcelSheetData;
 };
 type ExcelSheetData = Array<Record<string, ExportValue>>;
 type ExportDataArray = ExportValue[][];
-
-let WindowId: string | undefined;
-let RequestVerificationToken: string | undefined;
-
-async function sleep(ms: number) {
-  await new Promise((resolve) => setTimeout(resolve, ms));
+type TreeItem = {
+  [key: string]: ExportValue;
+  id: string;
+} & {
+  children: TreeItem[];
+};
+interface FlatItem {
+  [key: string]: ExportValue;
+  id: string;
+  parentId: string | null;
 }
+
+let authorizationHeader: string | undefined;
+let frontendVersionHeader: string | undefined;
+
+// async function sleep(ms: number) {
+//   await new Promise((resolve) => setTimeout(resolve, ms));
+// }
 
 function stringToBuffer(text: string): ArrayBuffer {
   const buffer = new ArrayBuffer(text.length);
@@ -39,6 +42,15 @@ function stringToBuffer(text: string): ArrayBuffer {
   return buffer;
 }
 
+function getHeaders() {
+  return {
+    Accept: 'application/json, text/plain, */*',
+    Authorization: authorizationHeader,
+    'Frontend-Version': frontendVersionHeader,
+    'x-requestid': createUUID()
+  };
+}
+
 async function exportAsXlsx(exportData: ExcelWorkbookData, filename: string) {
   const workbook = XLSX.utils.book_new();
   workbook.Props = {
@@ -46,48 +58,21 @@ async function exportAsXlsx(exportData: ExcelWorkbookData, filename: string) {
     CreatedDate: new Date()
   };
   for (const [sheetName, sheetData] of Object.entries(exportData)) {
-    const data: ExportDataArray = [Object.keys(sheetData[0])];
-    data.push(...sheetData.map(Object.values));
-    workbook.SheetNames.push(sheetName);
-    workbook.Sheets[sheetName] = XLSX.utils.aoa_to_sheet(data);
+    if (sheetData.length) {
+      const keys = Object.keys(sheetData[0]);
+      const data: ExportDataArray = [keys];
+      sheetData.forEach((entry) => {
+        const row = keys.map((key) => entry[key]);
+        data.push(row);
+      });
+      workbook.SheetNames.push(sheetName);
+      workbook.Sheets[sheetName] = XLSX.utils.aoa_to_sheet(data);
+    }
   }
   const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'binary' });
   const blob = new Blob([stringToBuffer(wbout)], { type: 'application/octet-stream' });
   // Once size restriction of blobs is reached, streamSaver package needs to be used instead
   saveAs(blob, `${filename}.xlsx`);
-}
-
-function convertResponse(data: any): Transfer[] {
-  const transfers: Transfer[] = [];
-  for (const group of data.Groups) {
-    for (const transfer of group.Transfers) {
-      transfers.push(adjustTransfer(transfer));
-    }
-  }
-  return transfers;
-}
-
-async function getBookings(body: object): Promise<Transfer[]> {
-  const response = await fetch(fbUrl(FB_API_GET_BOOKINGS_PATH), {
-    method: 'POST',
-    headers: DEFAULT_HEADERS,
-    body: JSON.stringify(body)
-  });
-  const data = await response.json();
-  return convertResponse(data);
-}
-
-async function getBookingsForMultiplePages(
-  startPage: number, endPage: number, body: object = {}
-): Promise<Transfer[]> {
-  const pagesArray = [...Array(endPage).keys()].slice(startPage);
-  const allBookings = await Promise.all(pagesArray.map(async (page: number) => {
-    await sleep((page - 1) * PAGINATION_DELAY);
-    return getBookings({
-      ...body, WindowId, RequestVerificationToken, CurrentPage: page
-    });
-  }));
-  return [].concat(...allBookings);
 }
 
 function getExportName(account?: string, page?: number): string {
@@ -97,73 +82,41 @@ function getExportName(account?: string, page?: number): string {
   return `Finanzblick-Export - ${date}${accountIdSegment}${pageSegment}`;
 }
 
-async function getAccounts(): Promise<any[]> {
-  const accountsResponse = await fetch(fbUrl(FB_API_GET_ACCOUNTS_PATH), {
-    method: 'POST',
-    headers: DEFAULT_HEADERS,
-    body: JSON.stringify({ WindowId, RequestVerificationToken })
+function flattenTree(tree: TreeItem[], parentId: string | null = null): FlatItem[] {
+  const items: FlatItem[] = [];
+  tree.forEach((item) => {
+    const { children, ...itemWithoutChildren } = item;
+    items.push({ ...itemWithoutChildren, parentId });
+    items.push(...flattenTree(item.children, item.id));
   });
-  const accounts = await accountsResponse.json();
-  return accounts.Accounts;
+  return items;
 }
 
-async function getCategories(): Promise<any[]> {
-  const executeGetCategories = async (isTaxCategoryTree: boolean): Promise<any> => {
-    const response = await fetch(fbUrl(FB_API_GET_CATEGORIES_PATH), {
-      method: 'POST',
-      headers: DEFAULT_HEADERS,
-      body: JSON.stringify({ WindowId, RequestVerificationToken, isTaxCategoryTree })
-    });
-    return response.json();
-  };
-  const categories: any[] = [];
-  const extractCategories = (objects: Array<Record<string, any>>,
-    extraProperties: Record<string, any>) => {
-    objects.forEach((obj) => {
-      extractCategories(obj.Children || [], extraProperties);
-      const { Children, ...objectWithoutChildren } = obj;
-      categories.push({ ...objectWithoutChildren, ...extraProperties });
-    });
-  };
-  const [categoryTree, taxCategoryTree] = await Promise.all([
-    executeGetCategories(false),
-    executeGetCategories(true)
-  ]);
-  extractCategories(categoryTree.CreditCategoryTree, { Credit: true, Tax: false });
-  extractCategories(categoryTree.DebitCategoryTree, { Credit: false, Tax: false });
-  extractCategories(taxCategoryTree.CreditCategoryTree, { Credit: true, Tax: true });
-  extractCategories(taxCategoryTree.DebitCategoryTree, { Credit: false, Tax: true });
-  return categories;
+async function getSyncData(): Promise<{
+  accounts: any[],
+  categories: any[],
+  tags: any[],
+}> {
+  const response = await fetch(fbUrl('sync/0'), {
+    method: 'GET',
+    headers: getHeaders()
+  });
+  return response.json();
 }
 
 export class Actions {
   async exportAll() {
-    const [accounts, categories] = await Promise.all([
-      getAccounts(),
-      getCategories()
-    ]);
-    const firstPageResponse = await fetch(fbUrl(FB_API_GET_BOOKINGS_PATH), {
-      method: 'POST',
-      headers: DEFAULT_HEADERS,
-      body: JSON.stringify({ WindowId, RequestVerificationToken, CurrentPage: 0 })
-    });
-    const firstPageResponseBody = await firstPageResponse.json();
-    const bookingsForFirstPage = convertResponse(firstPageResponseBody);
-    const numberOfPages = parseFloat(firstPageResponseBody.TotalBookingPages);
-    const bookingsForOtherPages = await getBookingsForMultiplePages(1, numberOfPages);
-    const bookings = bookingsForFirstPage.concat(...bookingsForOtherPages);
+    const { accounts, categories, tags } = await getSyncData();
+    const individualAccounts = accounts.filter((account) => account.type !== 'AccountGroup');
+    const flattenedCategories = flattenTree(categories);
     const name = getExportName();
-    exportAsXlsx({ bookings, accounts, categories }, name);
+    exportAsXlsx({ accounts: individualAccounts, categories: flattenedCategories, tags }, name);
   }
 
-  handleXHR(request: XHRRequest, response: XHRResponse) {
-    if (request.url === fbUrl(FB_API_GET_SESSON_INFO_PATH)) {
-      WindowId = JSON.parse(request.payload).WindowId;
-      RequestVerificationToken = JSON.parse(response.body).RequestVerificationToken;
-    } else {
-      WindowId = JSON.parse(request.payload || '{}').WindowId || WindowId;
-      RequestVerificationToken = JSON.parse(response.body || '{}').RequestVerificationToken || RequestVerificationToken;
-    }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  handleXHR(request: XHRRequest, _response: XHRResponse) {
+    authorizationHeader = request.headers.Authorization;
+    frontendVersionHeader = request.headers['Frontend-Version'];
   }
 }
 

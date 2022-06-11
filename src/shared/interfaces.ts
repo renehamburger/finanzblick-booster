@@ -2,7 +2,7 @@ export interface XHRRequest {
   method: string;
   url: string;
   headers: Record<string, string>;
-  payload?: string;
+  payload?: string | null;
 }
 
 export interface XHRResponse {
