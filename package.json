@@ -1,6 +1,6 @@
 {
   "name": "finanzblick-booster",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Chrome extension to extend the Finanzblick web app",
   "scripts": {
     "start": "webpack --config webpack/webpack.dev.js --watch",
