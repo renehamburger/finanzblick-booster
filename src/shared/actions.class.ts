@@ -1,12 +1,10 @@
 /* eslint-disable class-methods-use-this */
-import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import {
-  XHRRequest, XHRResponse, ExportValue
-} from './interfaces';
-import { fbUrl } from './helpers';
-import { createUUID } from './uuid';
+import * as XLSX from 'xlsx';
 import { PAGE_SIZE } from './const';
+import { fbUrl } from './helpers';
+import { ExportValue, XHRRequest, XHRResponse } from './interfaces';
+import { createUUID } from './uuid';
 
 type ExcelWorkbookData = {
   [sheetName: string]: ExcelSheetData;
@@ -162,23 +160,32 @@ async function getBookingsForAccount(accountId: string, startDate: Date = new Da
 
 export class Actions {
   async exportAll() {
-    const { accounts, categories, tags } = await getSyncData();
-    const individualAccounts = accounts.filter((account) => account.type !== 'AccountGroup');
-    const bookings = [];
-    await Promise.all(individualAccounts.map(async (account) => {
-      bookings.push(...await getBookingsForAccount(account.id));
-    }));
-    const flattenedCategories = flattenTree(categories);
-    const name = getExportName();
-    exportAsXlsx({
-      bookings, accounts: individualAccounts, categories: flattenedCategories, tags
-    }, name);
+    await this.executeExport();
+  }
+
+  async exportCurrentYear() {
+    const currentYear = new Date().getFullYear();
+    await this.executeExport(new Date(`01-01-${currentYear}`));
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   handleXHR(request: XHRRequest, _response: XHRResponse) {
     authorizationHeader = request.headers.Authorization;
     frontendVersionHeader = request.headers['Frontend-Version'];
+  }
+
+  private async executeExport(startDate?: Date, endDate?: Date) {
+    const { accounts, categories, tags } = await getSyncData();
+    const individualAccounts = accounts.filter((account) => account.type !== 'AccountGroup');
+    const bookings = [];
+    await Promise.all(individualAccounts.map(async (account) => {
+      bookings.push(...await getBookingsForAccount(account.id, startDate, endDate));
+    }));
+    const flattenedCategories = flattenTree(categories);
+    const name = getExportName();
+    exportAsXlsx({
+      bookings, accounts: individualAccounts, categories: flattenedCategories, tags
+    }, name);
   }
 }
 

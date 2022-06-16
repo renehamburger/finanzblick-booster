@@ -8,4 +8,5 @@ function triggerAction(action: Action) {
   });
 }
 
+$('#exportCurrentYear').on('click', () => triggerAction('exportCurrentYear'));
 $('#exportAll').on('click', () => triggerAction('exportAll'));
