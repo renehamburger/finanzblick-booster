@@ -178,9 +178,9 @@ export class Actions {
     const { accounts, categories, tags } = await getSyncData();
     const individualAccounts = accounts.filter((account) => account.type !== 'AccountGroup');
     const bookings = [];
-    await Promise.all(individualAccounts.map(async (account) => {
+    for (const account of individualAccounts) {
       bookings.push(...await getBookingsForAccount(account.id, startDate, endDate));
-    }));
+    }
     const flattenedCategories = flattenTree(categories);
     const name = getExportName();
     exportAsXlsx({
