@@ -139,6 +139,7 @@ async function getBookingsForAccount(accountId: string, startDate: Date = new Da
       Skip: page * PAGE_SIZE,
       Take: PAGE_SIZE,
       orderBy: 'Date',
+      orde: 'ASC',
       StartDate: getDateQueryParam(startDate),
       EndDate: getDateQueryParam(endDate)
     };
